@@ -1,6 +1,6 @@
 # Sensing the Heart: Quantifying the Audience Experience During a Live Performance of *Alice in Wonderland* via PPG Sensing
 
-**EG3000 Individual Project — Katherine Cowan | City, University of London | 2025–26**
+**EG3000 Individual Project — Katherine Cowan | City, St George's University of London | 2025–26**
 
 ---
 
@@ -8,11 +8,11 @@
 
 This repository contains all MATLAB analysis scripts developed for an EG3000 engineering dissertation investigating physiological synchrony among live theatre audiences using wrist-worn PPG (photoplethysmography) sensors.
 
-The study measured pulse rate, heart rate variability (HRV), and respiratory rate from 37 audience members during a full-length live performance of *Alice in Wonderland* by the Jasmin Vardimon Company (~80 minutes). Physiological synchrony was quantified using sliding-window mean pairwise Pearson correlation, applied separately to pulse rate and respiratory rate signals, to identify moments of collective physiological co-fluctuation during the performance.
+The study measured pulse rate, pulse rate variability (PRV), and respiratory rate from 37 audience members during a full-length live performance of *Alice in Wonderland* by the Jasmin Vardimon Company (~80 minutes). Physiological synchrony was quantified using sliding-window mean pairwise Pearson correlation, applied separately to pulse rate and respiratory rate signals, to identify moments of collective physiological co-fluctuation during the performance.
 
 **Key findings:**
 - A structured pulse rate synchrony peak was identified at t ≈ 1,325 s (~22 minutes) with mean pairwise r = 0.168, substantially above the minimum-synchrony baseline (r = −0.019)
-- Respiratory synchrony showed five oscillatory peaks across the performance, largely independent of the cardiac synchrony timecourse
+- Respiratory synchrony showed five oscillatory peaks across the performance, largely independent of the cardiac synchrony time course
 - Post-performance questionnaire data (N = 32) indicated high engagement (mean 7.28/10) and a predominantly positive, high-arousal emotional profile
 
 ---
@@ -133,7 +133,7 @@ H = HRM_mat;
 
 ## Data Availability
 
-The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the research team at City, University of London as a pre-existing resource for this project.
+The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the project supervisor.
 
 If you are an assessor and require access to the raw data for verification purposes, please contact the project supervisor.
 
@@ -152,8 +152,8 @@ Full reference list is available in the dissertation.
 
 ## Acknowledgements
 
-Sincere thanks to **Professor Caroline Li** for supervision and guidance throughout this project, and to the research team responsible for collecting the original PPG dataset.
+Sincere thanks to **Professor Caroline Li** for supervision and guidance throughout this project and to the research team responsible for collecting the original PPG dataset.
 
 ---
 
-*EG3000 Individual Project | Department of Engineering | City, University of London | 2025–26*
+*EG3000 Individual Project | Department of Engineering | City, St George's University of London | 2025–26*
