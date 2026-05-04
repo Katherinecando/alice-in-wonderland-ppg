@@ -1,6 +1,6 @@
 # Sensing the Heart: Quantifying the Audience Experience During a Live Performance of *Alice in Wonderland* via PPG Sensing
 
-**EG3000 Individual Project — Katherine Cowan | City, St George's University of London | 2025–26**
+**EG3000 Individual Project — Katherine Cando | City, St George's University of London | 2025–26**
 
 ---
 
