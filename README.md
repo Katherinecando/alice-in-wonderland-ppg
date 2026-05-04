@@ -148,7 +148,7 @@ This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data
 
 **What it does:** Loads the questionnaire Excel file, computes group-level statistics for engagement, performance ratings, and emotion distribution, and produces bar charts.
 
-**Before running:** Place `emotion marker table.xlsx` in the same folder as the script, or update the `file` path on line 58.
+**Before running:** Questionarie excel file required
 
 **Output:** Figures 9–10 in dissertation (questionnaire ratings and emotion distribution)
 
@@ -171,7 +171,6 @@ The `development/` folder contains all earlier, exploratory, and superseded scri
 - Exploratory visualisation scripts (`step1_*.m`, `step2_*.m`, `variation_over_time.m`)
 - Initial RRest setup and HR synchrony scripts (`setup_01_rrest.m`, `step3B_HR_synchrony_new.m`)
 - Debugging and diagnostic snippets (`draft.m`, `hrv_check.m`, `rescue_script.m`)
-- The synchrony formula documentation script (`synchrony_formula_demo.m`) — useful for understanding the mathematical approach
 
 ---
 
