@@ -35,10 +35,11 @@ alice-in-wonderland-ppg/
 │   ├── 1_HRV_extraction_fixed2.m              Step 1 — PPG pre-processing, IBI extraction, HRV
 │   ├── 2_build_theatre_data_for_RRest_v3.m    Step 2 — Build theatre_data.mat for RR pipeline
 │   ├── 3_peaks_final_analysis.m               Step 3 — Pulse rate synchrony analysis (Figures 2–5)
-│   ├── 4_plot_fig6_from_RRest.m               Step 4 — Figure 6: RR overlay (from RRest output)
-│   ├── 5_overlay_HR_breathing_synchrony.m     Step 5 — Figure 8: PR + RR synchrony overlay
-│   ├── 6_hrm_plot_try2.m                    Step 6 — Figure 1: Group mean pulse rate
-│   ├── 7_questionarie_collective_analysis.m   Step 7 — Figures 9–10: Questionnaire analysis
+│   ├── 4_plot_fig6_from_RRest.m               Step 4 — Figure 9: RR overlay (from RRest output)
+│   ├── 5_overlay_HR_breathing_synchrony.m     Step 5 — Figure 11: PR + RR synchrony overlay
+│   ├── 6_hrm_plot_try2.m                      Step 6 — Figure 1: Group mean pulse rate
+│   ├── 7_questionarie_collective_analysis.m   Step 7 — Figures 12–13: Questionnaire analysis
+├   |─8_full_performance_emotions_timeline_V2.m  Step 8 — Figure 14: Audience experience timeline
 │   └── sliding_synchrony.m                   Helper — sliding-window synchrony (called by script 3)
 │
 ├── rrest_pipeline/                     ← Custom scripts that run inside the RRest pipeline
