@@ -1,6 +1,6 @@
 # Sensing the Heart: Quantifying the Audience Experience During a Live Performance of *Alice in Wonderland* via PPG Sensing
 
-**EG3000 Individual Project — Katherine Cando | City, St George's University of London | 2025–26**
+**EG3000 Individual Project — Katherine Cowan | City, University of London | 2025–26**
 
 ---
 
@@ -8,11 +8,11 @@
 
 This repository contains all MATLAB analysis scripts developed for an EG3000 engineering dissertation investigating physiological synchrony among live theatre audiences using wrist-worn PPG (photoplethysmography) sensors.
 
-The study measured pulse rate, pulse rate variability (PRV), and respiratory rate from 37 audience members during a full-length live performance of *Alice in Wonderland* by the Jasmin Vardimon Company (~80 minutes). Physiological synchrony was quantified using sliding-window mean pairwise Pearson correlation, applied separately to pulse rate and respiratory rate signals, to identify moments of collective physiological co-fluctuation during the performance.
+The study measured pulse rate, heart rate variability (HRV), and respiratory rate from 37 audience members during a full-length live performance of *Alice in Wonderland* by the Jasmin Vardimon Company (~80 minutes). Physiological synchrony was quantified using sliding-window mean pairwise Pearson correlation, applied separately to pulse rate and respiratory rate signals, to identify moments of collective physiological co-fluctuation during the performance.
 
 **Key findings:**
 - A structured pulse rate synchrony peak was identified at t ≈ 1,325 s (~22 minutes) with mean pairwise r = 0.168, substantially above the minimum-synchrony baseline (r = −0.019)
-- Respiratory synchrony showed five oscillatory peaks across the performance, largely independent of the cardiac synchrony time course
+- Respiratory synchrony showed five oscillatory peaks across the performance, largely independent of the cardiac synchrony timecourse
 - Post-performance questionnaire data (N = 32) indicated high engagement (mean 7.28/10) and a predominantly positive, high-arousal emotional profile
 
 ---
@@ -24,7 +24,6 @@ The study measured pulse rate, pulse rate variability (PRV), and respiratory rat
 - **Statistics and Machine Learning Toolbox** (for `corr`, `mad`, `movmedian`)
 - **RRest toolbox v3.0** — required for the respiratory rate pipeline (`rrest_pipeline/`). Download from [github.com/peterhcharlton/RRest](https://github.com/peterhcharlton/RRest) and place the `RRest-master` folder alongside your working directory.
 
-
 ---
 
 ## Repository Structure
@@ -34,7 +33,7 @@ alice-in-wonderland-ppg/
 │
 ├── final/                              ← Core analysis scripts (run these to reproduce all figures)
 │   ├── 1_HRV_extraction_fixed2.m              Step 1 — PPG pre-processing, IBI extraction, HRV
-│   ├── 2_build_theatre_data_for_RRest_v2.m    Step 2 — Build theatre_data.mat for RR pipeline
+│   ├── 2_build_theatre_data_for_RRest_v3.m    Step 2 — Build theatre_data.mat for RR pipeline
 │   ├── 3_peaks_final_analysis.m               Step 3 — Pulse rate synchrony analysis (Figures 2–5)
 │   ├── 4_plot_fig6_from_RRest.m               Step 4 — Figure 6: RR overlay (from RRest output)
 │   ├── 5_overlay_HR_breathing_synchrony.m     Step 5 — Figure 8: PR + RR synchrony overlay
@@ -42,9 +41,8 @@ alice-in-wonderland-ppg/
 │   ├── 7_questionarie_collective_analysis.m   Step 7 — Figures 9–10: Questionnaire analysis
 │   └── sliding_synchrony.m                   Helper — sliding-window synchrony (called by script 3)
 │
-├── rrest_pipeline/                     ← Custom scripts written for the RRest-based RR pipeline
+├── rrest_pipeline/                     ← Custom scripts that run inside the RRest pipeline
 │   ├── setup_universal_params.m               RRest configuration (paths, subject list, settings)
-│   ├── build_theatre_data_for_RRest_v3_FORMATFIX.m  Format raw PPG CSVs into theatre_data.mat
 │   ├── result_subject_1.m                     QC: inspect raw vs fused RR for one subject
 │   ├── results_all_subjects.m                 Aggregate RRest output → RR_final.mat
 │   └── breathing_synchrony_analysis.m         Compute breathing synchrony → breathing_synchrony_results.mat
@@ -54,7 +52,9 @@ alice-in-wonderland-ppg/
 │
 └── README.md
 ```
+
 > **Note on RRest:** The `rrest_pipeline/` folder contains only the custom scripts written for this project. The RRest toolbox itself (Charlton et al., 2017) must be downloaded separately — it is third-party code and is not reproduced here.
+
 ---
 
 ## How to Run
@@ -75,7 +75,7 @@ Scripts must be run **in order**. Each script depends on variables or `.mat` fil
 ---
 
 ### Step 2 — Build theatre data for respiratory pipeline
-**Script:** `final/2_build_theatre_data_for_RRest_v2.m`
+**Script:** `final/2_build_theatre_data_for_RRest_v3.m`
 
 **What it does:** Reads all CSV files, resamples and cleans each PPG waveform to 25 Hz, and packages them into the `theatre_data.mat` struct required by the RRest pipeline.
 
@@ -90,12 +90,13 @@ Scripts must be run **in order**. Each script depends on variables or `.mat` fil
 
 This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data to extract per-participant respiratory rate estimates. Run in this order:
 
-1. `setup_universal_params.m` — sets paths and subject list
-2. Run `RRest.m` (from the downloaded RRest toolbox) — produces `N_rrEsts.mat` per subject
-3. `results_all_subjects.m` — aggregates and cleans all estimates → `RR_final.mat`
-4. `breathing_synchrony_analysis.m` — computes sliding-window RR synchrony → `breathing_synchrony_results.mat`
+1. `final/2_build_theatre_data_for_RRest_v3.m` — formats PPG CSVs into `theatre_data.mat` (also Step 2 above)
+2. `rrest_pipeline/setup_universal_params.m` — sets paths and subject list for RRest
+3. Run `RRest.m` (from the downloaded RRest toolbox) — produces `N_rrEsts.mat` per subject
+4. `rrest_pipeline/results_all_subjects.m` — aggregates and cleans all estimates → `RR_final.mat`
+5. `rrest_pipeline/breathing_synchrony_analysis.m` — computes sliding-window RR synchrony → `breathing_synchrony_results.mat`
 
-`result_subject_1.m` is a QC utility to visually inspect the raw vs temporally-fused RR trace for a single subject.
+`rrest_pipeline/result_subject_1.m` is a QC utility to visually inspect the raw vs temporally-fused RR trace for a single subject.
 
 ---
 
@@ -148,21 +149,20 @@ This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data
 
 **What it does:** Loads the questionnaire Excel file, computes group-level statistics for engagement, performance ratings, and emotion distribution, and produces bar charts.
 
-**Before running:** Questionarie excel file required
+**Before running:** Place `emotion marker table.xlsx` in the same folder as the script, or update the `file` path on line 58.
 
 **Output:** Figures 9–10 in dissertation (questionnaire ratings and emotion distribution)
 
 ---
 
----
-
 ## Data Availability
 
-The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the project supervisor.
+The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the research team at City, University of London as a pre-existing resource for this project.
 
 If you are an assessor and require access to the raw data for verification purposes, please contact the project supervisor.
 
 ---
+
 ## Development Scripts
 
 The `development/` folder contains all earlier, exploratory, and superseded scripts written during the project. These are retained for transparency and to document the iterative development process, but they are **not** required to reproduce the final results. They include:
@@ -171,6 +171,7 @@ The `development/` folder contains all earlier, exploratory, and superseded scri
 - Exploratory visualisation scripts (`step1_*.m`, `step2_*.m`, `variation_over_time.m`)
 - Initial RRest setup and HR synchrony scripts (`setup_01_rrest.m`, `step3B_HR_synchrony_new.m`)
 - Debugging and diagnostic snippets (`draft.m`, `hrv_check.m`, `rescue_script.m`)
+- The synchrony formula documentation script (`synchrony_formula_demo.m`) — useful for understanding the mathematical approach
 
 ---
 
@@ -187,8 +188,8 @@ Full reference list is available in the dissertation.
 
 ## Acknowledgements
 
-Sincere thanks to **Professor Caroline Li** for supervision and guidance throughout this project and to the research team responsible for collecting the original PPG dataset.
+Sincere thanks to **Professor Caroline Li** for supervision and guidance throughout this project, and to the research team responsible for collecting the original PPG dataset.
 
 ---
 
-*EG3000 Individual Project | Department of Engineering | City, St George's University of London | 2025–26*
+*EG3000 Individual Project | Department of Engineering | City, University of London | 2025–26*
