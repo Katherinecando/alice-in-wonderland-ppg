@@ -37,7 +37,7 @@ alice-in-wonderland-ppg/
 │   ├── 3_peaks_final_analysis.m               Step 3 — Pulse rate synchrony analysis (Figures 2–5)
 │   ├── 4_plot_fig6_from_RRest.m               Step 4 — Figure 6: RR overlay (from RRest output)
 │   ├── 5_overlay_HR_breathing_synchrony.m     Step 5 — Figure 8: PR + RR synchrony overlay
-│   ├── 6_hrm_group_trend.m                    Step 6 — Figure 1: Group mean pulse rate
+│   ├── 6_hrm_plot_try2.m                    Step 6 — Figure 1: Group mean pulse rate
 │   ├── 7_questionarie_collective_analysis.m   Step 7 — Figures 9–10: Questionnaire analysis
 │   └── sliding_synchrony.m                   Helper — sliding-window synchrony (called by script 3)
 │
@@ -75,7 +75,7 @@ Scripts must be run **in order**. Each script depends on variables or `.mat` fil
 ---
 
 ### Step 2 — Build theatre data for respiratory pipeline
-**Script:** `final/2_build_theatre_data_for_RRest_v3.m`
+**Script:** `final/2_build_theatre_data_for_RRest_v3_FORMATFIX.m`
 
 **What it does:** Reads all CSV files, resamples and cleans each PPG waveform to 25 Hz, and packages them into the `theatre_data.mat` struct required by the RRest pipeline.
 
@@ -90,7 +90,7 @@ Scripts must be run **in order**. Each script depends on variables or `.mat` fil
 
 This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data to extract per-participant respiratory rate estimates. Run in this order:
 
-1. `final/2_build_theatre_data_for_RRest_v3.m` — formats PPG CSVs into `theatre_data.mat` (also Step 2 above)
+1. `final/2_build_theatre_data_for_RRest_v3_FORMATFIX.m` — formats PPG CSVs into `theatre_data.mat` (also Step 2 above)
 2. `rrest_pipeline/setup_universal_params.m` — sets paths and subject list for RRest
 3. Run `RRest.m` (from the downloaded RRest toolbox) — produces `N_rrEsts.mat` per subject
 4. `rrest_pipeline/results_all_subjects.m` — aggregates and cleans all estimates → `RR_final.mat`
@@ -107,7 +107,7 @@ This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data
 
 **Before running:** Run Step 1 first (or load `HRV_final.mat`), then set `H = HRM_mat;` in the workspace.
 
-**Output:** Figures 2–5 in dissertation. Variables `t_mid` and `sync_s` remain in workspace for Step 5.
+**Output:** Figures 5–8 in dissertation. Variables `t_mid` and `sync_s` remain in workspace for Step 5.
 
 ---
 
@@ -118,7 +118,7 @@ This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data
 
 **Before running:** Complete Step 2b first so `RR_final.mat` exists.
 
-**Output:** `Figure6_RR_overlay_RRest.png` (Figure 6 in dissertation)
+**Output:** `Figure6_RR_overlay_RRest.png` (Figure 9 in dissertation)
 
 ---
 
@@ -129,7 +129,7 @@ This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data
 
 **Before running:** Complete Steps 2b and 3. Step 3 must still be active in the workspace.
 
-**Output:** Figure 8 in dissertation (PR and RR synchrony overlay)
+**Output:** Figure 11 in dissertation (PR and RR synchrony overlay)
 
 ---
 
