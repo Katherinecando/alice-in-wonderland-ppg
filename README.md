@@ -22,8 +22,8 @@ The study measured pulse rate, pulse rate variability (PRV), and respiratory rat
 - **MATLAB** R2020b or later
 - **Signal Processing Toolbox** (for `butter`, `filtfilt`, `findpeaks`)
 - **Statistics and Machine Learning Toolbox** (for `corr`, `mad`, `movmedian`)
+- **RRest toolbox v3.0** — required for the respiratory rate pipeline (`rrest_pipeline/`). Download from [github.com/peterhcharlton/RRest](https://github.com/peterhcharlton/RRest) and place the `RRest-master` folder alongside your working directory.
 
-No additional toolboxes beyond the above are required. The respiratory rate estimation algorithm was adapted from the RRest toolbox (Charlton et al., 2017) but is implemented directly using standard MATLAB signal processing functions — the RRest toolbox itself does not need to be installed.
 
 ---
 
@@ -32,24 +32,36 @@ No additional toolboxes beyond the above are required. The respiratory rate esti
 ```
 alice-in-wonderland-ppg/
 │
-├── final/                         ← Core analysis scripts (run these)
-│   ├── 1_HRV_extraction_fixed2.m          Step 1 — PPG pre-processing, IBI extraction, HRV
-│   ├── 2_build_theatre_data_for_RRest_v2.m Step 2 — Build theatre_data.mat for RR pipeline
-│   ├── 3_peaks_final_analysis.m            Step 3 — Pulse rate synchrony analysis
-│   ├── 4_plot_rr_overlay.m                 Step 4 — Respiratory rate extraction + RR synchrony
-│   ├── 5_overlay_HR_breathing_synchrony.m  Step 5 — Overlay PR and RR synchrony timecourses
-│   ├── 6_hrm_group_trend.m                 Step 6 — Group mean pulse rate figure
-│   ├── 7_questionarie_collective_analysis.m Step 7 — Questionnaire analysis
-│   └── sliding_synchrony.m                Helper function — called by scripts 3 and 4
+├── final/                              ← Core analysis scripts (run these to reproduce all figures)
+│   ├── 1_HRV_extraction_fixed2.m              Step 1 — PPG pre-processing, IBI extraction, HRV
+│   ├── 2_build_theatre_data_for_RRest_v2.m    Step 2 — Build theatre_data.mat for RR pipeline
+│   ├── 3_peaks_final_analysis.m               Step 3 — Pulse rate synchrony analysis (Figures 2–5)
+│   ├── 4_plot_fig6_from_RRest.m               Step 4 — Figure 6: RR overlay (from RRest output)
+│   ├── 5_overlay_HR_breathing_synchrony.m     Step 5 — Figure 8: PR + RR synchrony overlay
+│   ├── 6_hrm_group_trend.m                    Step 6 — Figure 1: Group mean pulse rate
+│   ├── 7_questionarie_collective_analysis.m   Step 7 — Figures 9–10: Questionnaire analysis
+│   └── sliding_synchrony.m                   Helper — sliding-window synchrony (called by script 3)
+│
+├── rrest_pipeline/                     ← Custom scripts written for the RRest-based RR pipeline
+│   ├── setup_universal_params.m               RRest configuration (paths, subject list, settings)
+│   ├── build_theatre_data_for_RRest_v3_FORMATFIX.m  Format raw PPG CSVs into theatre_data.mat
+│   ├── result_subject_1.m                     QC: inspect raw vs fused RR for one subject
+│   ├── results_all_subjects.m                 Aggregate RRest output → RR_final.mat
+│   └── breathing_synchrony_analysis.m         Compute breathing synchrony → breathing_synchrony_results.mat
+│
+├── development/                        ← Exploratory and superseded scripts (kept for transparency)
+│   └── *.m
 │
 └── README.md
 ```
-
+> **Note on RRest:** The `rrest_pipeline/` folder contains only the custom scripts written for this project. The RRest toolbox itself (Charlton et al., 2017) must be downloaded separately — it is third-party code and is not reproduced here.
 ---
 
 ## How to Run
 
 Scripts must be run **in order**. Each script depends on variables or `.mat` files produced by the previous one.
+
+---
 
 ### Step 1 — PPG pre-processing and HRV extraction
 **Script:** `final/1_HRV_extraction_fixed2.m`
@@ -65,45 +77,56 @@ Scripts must be run **in order**. Each script depends on variables or `.mat` fil
 ### Step 2 — Build theatre data for respiratory pipeline
 **Script:** `final/2_build_theatre_data_for_RRest_v2.m`
 
-**What it does:** Reads all CSV files again, resamples and cleans each PPG waveform to 25 Hz, and packages them into the `theatre_data.mat` struct required by the RR pipeline.
+**What it does:** Reads all CSV files, resamples and cleans each PPG waveform to 25 Hz, and packages them into the `theatre_data.mat` struct required by the RRest pipeline.
 
-**Before running:** Update `csvFolder` on line 6 to point to your PPG CSV folder.
+**Before running:** Update `csvFolder` to point to your PPG CSV folder.
 
 **Output:** `theatre_data.mat`
+
+---
+
+### Step 2b — Run RRest respiratory rate estimation *(separate pipeline)*
+**Scripts:** `rrest_pipeline/` folder
+
+This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data to extract per-participant respiratory rate estimates. Run in this order:
+
+1. `setup_universal_params.m` — sets paths and subject list
+2. Run `RRest.m` (from the downloaded RRest toolbox) — produces `N_rrEsts.mat` per subject
+3. `results_all_subjects.m` — aggregates and cleans all estimates → `RR_final.mat`
+4. `breathing_synchrony_analysis.m` — computes sliding-window RR synchrony → `breathing_synchrony_results.mat`
+
+`result_subject_1.m` is a QC utility to visually inspect the raw vs temporally-fused RR trace for a single subject.
 
 ---
 
 ### Step 3 — Pulse rate synchrony analysis
 **Script:** `final/3_peaks_final_analysis.m`
 
-**What it does:** Takes `HRM_mat` from Step 1 and computes the sliding-window (W = 120 s, step = 1 s) mean pairwise Pearson correlation synchrony timecourse. Identifies the primary synchrony peak and a minimum-synchrony baseline, then produces correlation matrices, distribution plots, and a boxplot comparison.
+**What it does:** Takes `HRM_mat` from Step 1 and computes the sliding-window (W = 120 s, step = 1 s) mean pairwise Pearson correlation synchrony timecourse. Identifies the primary synchrony peak and a minimum-synchrony baseline window, then produces correlation matrices, distribution plots, and a boxplot comparison.
 
-**Before running:** Run Step 1 first, then add this line at the top of the script (or run in the same MATLAB session):
-```matlab
-H = HRM_mat;
-```
+**Before running:** Run Step 1 first (or load `HRV_final.mat`), then set `H = HRM_mat;` in the workspace.
 
-**Output:** Figures 2–5 in dissertation (synchrony timecourse, correlation matrices, distribution, boxplot). Variables `sync`, `t_sync`, `t_mid`, `sync_s` remain in workspace for Step 5.
+**Output:** Figures 2–5 in dissertation. Variables `t_mid` and `sync_s` remain in workspace for Step 5.
 
 ---
 
-### Step 4 — Respiratory rate extraction and synchrony
-**Script:** `final/4_plot_rr_overlay.m`
+### Step 4 — Figure 6: Respiratory rate overlay
+**Script:** `final/4_plot_fig6_from_RRest.m`
 
-**What it does:** Loads `theatre_data.mat`, applies a three-stage RR estimation pipeline to each participant (BFi bandpass filter 0.15–0.55 Hz → WCH sliding Welch PSD 32 s/4 s → physiological gate 6–30 br/min), plots all participants' RR overlaid with the group mean, and computes + saves the respiratory synchrony timecourse.
+**What it does:** Loads `RR_final.mat` produced by the RRest pipeline (Step 2b) and plots all 32 participants' cleaned, bounded respiratory rate traces overlaid with the smoothed group mean.
 
-**Before running:** Run Step 2 first. Ensure `sliding_synchrony.m` is on the MATLAB path.
+**Before running:** Complete Step 2b first so `RR_final.mat` exists.
 
-**Output:** `RR_overlay_all_subjects.png` (Figure 6), `breathing_synchrony_results.mat` (used in Step 5)
+**Output:** `Figure6_RR_overlay_RRest.png` (Figure 6 in dissertation)
 
 ---
 
-### Step 5 — Overlay pulse rate and respiratory synchrony
+### Step 5 — Figure 8: Pulse rate and respiratory synchrony overlay
 **Script:** `final/5_overlay_HR_breathing_synchrony.m`
 
-**What it does:** Loads `breathing_synchrony_results.mat` (Step 4) and interpolates the pulse rate synchrony curve (`sync_s`, `t_mid` from Step 3 workspace) onto the same timeline, then plots both on the same axes.
+**What it does:** Loads `breathing_synchrony_results.mat` from the RRest pipeline and the pulse rate synchrony variables (`t_mid`, `sync_s`) from Step 3, interpolates both onto a common timeline, and plots them overlaid. Also computes cross-correlation between the two synchrony timecourses.
 
-**Before running:** Run Steps 3 and 4 first (Step 3 must still be in the workspace for `sync_s` and `t_mid`).
+**Before running:** Complete Steps 2b and 3. Step 3 must still be active in the workspace.
 
 **Output:** Figure 8 in dissertation (PR and RR synchrony overlay)
 
@@ -127,7 +150,9 @@ H = HRM_mat;
 
 **Before running:** Place `emotion marker table.xlsx` in the same folder as the script, or update the `file` path on line 58.
 
-**Output:** Figure 9 in dissertation (questionnaire ratings) and printed summary statistics
+**Output:** Figures 9–10 in dissertation (questionnaire ratings and emotion distribution)
+
+---
 
 ---
 
@@ -136,6 +161,17 @@ H = HRM_mat;
 The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the project supervisor.
 
 If you are an assessor and require access to the raw data for verification purposes, please contact the project supervisor.
+
+---
+## Development Scripts
+
+The `development/` folder contains all earlier, exploratory, and superseded scripts written during the project. These are retained for transparency and to document the iterative development process, but they are **not** required to reproduce the final results. They include:
+
+- Early pipeline attempts (`HRV_extraction_attempt.m`, `HRV_extraction_fixed.m`)
+- Exploratory visualisation scripts (`step1_*.m`, `step2_*.m`, `variation_over_time.m`)
+- Initial RRest setup and HR synchrony scripts (`setup_01_rrest.m`, `step3B_HR_synchrony_new.m`)
+- Debugging and diagnostic snippets (`draft.m`, `hrv_check.m`, `rescue_script.m`)
+- The synchrony formula documentation script (`synchrony_formula_demo.m`) — useful for understanding the mathematical approach
 
 ---
 
