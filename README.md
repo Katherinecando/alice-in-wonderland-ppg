@@ -1,6 +1,6 @@
 # Sensing the Heart: Quantifying the Audience Experience During a Live Performance of *Alice in Wonderland* via PPG Sensing
 
-**EG3000 Individual Project — Katherine Cowan | City, University of London | 2025–26**
+**EG3000 Individual Project — Katherine Cando | City, St George's University of London | 2025–26**
 
 ---
 
@@ -149,17 +149,16 @@ This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data
 
 **What it does:** Loads the questionnaire Excel file, computes group-level statistics for engagement, performance ratings, and emotion distribution, and produces bar charts.
 
-**Before running:** Place `emotion marker table.xlsx` in the same folder as the script, or update the `file` path on line 58.
-
+**Before running:** Questionnaire Excel file required.
 **Output:** Figures 9–10 in dissertation (questionnaire ratings and emotion distribution)
 
 ---
 
 ## Data Availability
 
-The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the research team at City, University of London as a pre-existing resource for this project.
+The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the project supervisor.
 
-If you are an assessor and require access to the raw data for verification purposes, please contact the project supervisor.
+If you are an assessor and require access to the raw data for verification, please contact the project supervisor.
 
 ---
 
@@ -192,4 +191,4 @@ Sincere thanks to **Professor Caroline Li** for supervision and guidance through
 
 ---
 
-*EG3000 Individual Project | Department of Engineering | City, University of London | 2025–26*
+*EG3000 Individual Project | Department of Engineering | City, St George's University of London | 2025–26*
