@@ -9,7 +9,7 @@ maxHR = 130;                 % bpm
 minValidPoints = 120;        % minimum valid HR samples
 
 % HRV settings
-fsDefault = 25;              % expected waveform sampling rate
+fsDefault = 25;              % expected WRT waveform sampling rate
 hrvWin = 60;                 % seconds (time-domain HRV window)
 minBeatsInWin = 20;          % minimum beats required per HRV window
 maxBadProp = 0.2;            % max allowed NaNs proportion inside HRV window
@@ -19,8 +19,8 @@ dataFolder = "C:\Users\katyl\OneDrive - City, University of London\year 3\indivi
 files = dir(fullfile(dataFolder, "*.csv"));
 
 % Optional extra filtering
-files = files(~startsWith({files.name}, "."));
-files = files(~contains({files.name}, "~"));
+files = files(~startsWith({files.name}, "."));    % remove hidden
+files = files(~contains({files.name}, "~"));      % remove temp
 
 if isempty(files)
     error("No CSV files found in: %s", dataFolder);
@@ -35,7 +35,7 @@ RMSSD_all = {};
 SDNN_all  = {};
 
 skipped = 0;
-didPlotQC = false;   % plot first successful participant only
+didPlotQC = false;   % ✅ plot first successful participant only
 
 for k = 1:numel(files)
 
@@ -82,14 +82,15 @@ for k = 1:numel(files)
         end
     end
 
-    % time-from-start for every row
+    % time-from-start for every row (UTC repeats within each second)
     t_allRows = utc - utc(1);
 
-    % -------- HRM SERIES --------
+    % -------- HRM SERIES (per-second entries) --------
     validHR = ~isnan(t_allRows) & ~isnan(hrm) & hrm >= minHR & hrm <= maxHR;
     t_hr = t_allRows(validHR);
     hrmV = hrm(validHR);
 
+    % Keep only performance window
     keepHR = t_hr >= 0 & t_hr <= performanceSeconds;
     t_hr = t_hr(keepHR);
     hrmV = hrmV(keepHR);
@@ -100,10 +101,11 @@ for k = 1:numel(files)
         continue;
     end
 
+    % Remove duplicate timestamps in HRM
     [tUnique, ia] = unique(t_hr, 'stable');
     hrmUnique = hrmV(ia);
 
-    % Lock participant index
+    % Lock participant index so arrays stay aligned
     p = numel(HRM_all) + 1;
     T_all{p}   = tUnique;
     HRM_all{p} = hrmUnique;
@@ -113,7 +115,7 @@ for k = 1:numel(files)
     utc_ppg = utc(validPPG);
     ppg = data(validPPG);
 
-    % performance window using time-from-start
+    % Keep only performance window (using time-from-start)
     t_ppg_sec = utc_ppg - utc(1);
     keepPPG = t_ppg_sec >= 0 & t_ppg_sec <= performanceSeconds;
 
@@ -135,7 +137,7 @@ for k = 1:numel(files)
         fsEst = fsDefault;
     end
 
-    % Build high-res time vector
+    % Build high-res time vector within each UTC second
     idxWithin = nan(size(utc_ppg));
     for s = 1:numel(uS)
         ii = find(utc_ppg == uS(s));
@@ -143,51 +145,16 @@ for k = 1:numel(files)
     end
     t_ppg = (utc_ppg - utc_ppg(1)) + idxWithin./fsEst;
 
-    % =========================================================
-    % NEW: ARTEFACT MASKING (dropouts/spikes) BEFORE BEAT DETECT
-    % =========================================================
-    ppg2 = double(ppg);
-
-    m = movmedian(ppg2, round(2*fsEst));       % 2s running median
-    dropMask = (ppg2 < (m - 5*mad(ppg2,1)));   % extreme dropouts
-    dppg = diff(ppg2);
-    jumpMask = [false; abs(dppg) > 8*mad(dppg,1)];  % sudden jumps
-
-    bad = dropMask | jumpMask;
-    ppg2(bad) = NaN;
-
-    % Fill only short gaps (<=0.5s)
-    ppg2 = fillmissing(ppg2, 'linear', 'MaxGap', round(0.5*fsEst));
-
-    if mean(isnan(ppg2)) > 0.2
-        warning("Too much PPG missing after artefact removal in %s", files(k).name);
-        RMSSD_all{p} = nan(performanceSeconds+1, 1);
-        SDNN_all{p}  = nan(performanceSeconds+1, 1);
-        continue;
-    end
-
     % -------- Beat detection -> IBI -> HRV --------
     try
-        [beatTimes, IBI, IBIt, usedInversion] = ppg_to_ibi(ppg2, fsEst, 0);
-
-        % NEW: sanity check on beat rate
-        durMin = (t_ppg(end) - t_ppg(1)) / 60;
-        bpm_est = numel(beatTimes) / durMin;
-
-        if bpm_est < 35 || bpm_est > 140
-            warning("Unrealistic beat rate (%.1f bpm) in %s -> skipping HRV", bpm_est, files(k).name);
-            RMSSD_all{p} = nan(performanceSeconds+1, 1);
-            SDNN_all{p}  = nan(performanceSeconds+1, 1);
-            continue;
-        end
-
+        [beatTimes, IBI, IBIt, usedInversion] = ppg_to_ibi(ppg, fsEst, 0);
         IBI = clean_ibi(IBI);
 
-        % QC plot: first successful participant only
+        % ✅ QC plot: first successful participant only
         if ~didPlotQC
             didPlotQC = true;
-            fprintf("QC P=%d | file=%s | fsEst=%gHz | beats=%d | bpm_est=%.1f | inverted=%d\n", ...
-                p, files(k).name, fsEst, numel(beatTimes), bpm_est, usedInversion);
+            fprintf("QC P=%d | file=%s | fsEst=%gHz | beats=%d | inverted=%d\n", ...
+                p, files(k).name, fsEst, numel(beatTimes), usedInversion);
 
             figure;
 
@@ -201,11 +168,10 @@ for k = 1:numel(files)
             bp = designfilt('bandpassiir','FilterOrder',4, ...
                 'HalfPowerFrequency1',0.7,'HalfPowerFrequency2',4.0, ...
                 'SampleRate',fsEst);
-
-            xf = filtfilt(bp, double(ppg2));
+            xf = filtfilt(bp, double(ppg));
             xf = xf - median(xf);
-            sc = mad(xf,1); if sc==0, sc = std(xf); end; if sc==0, sc=1; end
-            xf = xf / sc;
+            d = mad(xf,1); if d==0, d = std(xf); end; if d==0, d=1; end
+            xf = xf / d;
 
             subplot(2,1,2);
             plot(t_ppg(mask30), xf(mask30)); hold on;
@@ -216,7 +182,7 @@ for k = 1:numel(files)
             end
             hold off;
             xlabel('Time (s)'); ylabel('Filtered (norm)');
-            title('Filtered PPG + detected beats (after artefact mask)');
+            title('Filtered PPG + detected beats');
         end
 
         % Align HRV to 1 Hz axis 0..performanceSeconds
@@ -236,10 +202,6 @@ if numel(HRM_all) < 3
     error('Too few valid participants loaded.');
 end
 
-% meanHR_fromBeats = 60 / mean(clean_ibi(diff(beatTimes)),'omitnan');
-% meanHR_fromHRM   = mean(HRM_all{p},'omitnan');
-% fprintf("Mean HR beats=%.1f bpm | HRM=%.1f bpm\n", meanHR_fromBeats, meanHR_fromHRM);
-
 %% ================= BUILD MATRICES (4801 x nP) =================
 nP = numel(HRM_all);
 tCommon = (0:performanceSeconds)';
@@ -256,34 +218,56 @@ end
 
 fprintf("Done. HRM_mat=%s, RMSSD_mat=%s, SDNN_mat=%s\n", ...
     mat2str(size(HRM_mat)), mat2str(size(RMSSD_mat)), mat2str(size(SDNN_mat)));
-save('HRV_final.mat','tCommon','RMSSD_mat','SDNN_mat','HRM_mat','-v7.3');
+
+% --- Remove extreme dropouts / spikes (artefact mask) ---
+ppg2 = double(ppg);
+
+% Anything far below the running median is a dropout
+m = movmedian(ppg2, round(2*fsEst));    % 2s running median
+dropMask = (ppg2 < (m - 5*mad(ppg2,1))); % robust threshold
+
+% Also mask sudden jumps
+jumpMask = [false; abs(diff(ppg2)) > 8*mad(diff(ppg2),1)];
+
+bad = dropMask | jumpMask;
+
+% Replace bad samples with NaN then interpolate short gaps only
+ppg2(bad) = NaN;
+ppg2 = fillmissing(ppg2,'linear','MaxGap',round(0.5*fsEst)); % fill gaps <=0.5s
+
+% If too much missing, skip HRV
+if mean(isnan(ppg2)) > 0.2
+    warning("Too much PPG missing after artefact removal in %s", files(k).name);
+    RMSSD_all{p} = nan(performanceSeconds+1,1);
+    SDNN_all{p}  = nan(performanceSeconds+1,1);
+    continue;
+end
+
 
 %% ================= FUNCTIONS =================
 
-function [beatTimes, IBI, IBIt, usedInversion] = ppg_to_ibi(ppg, fs, t0)
+function [beatTimes, IBI, IBIt, usedInversion] = ppg_to_ibi(ppg2, fs, t0)
 if nargin < 3, t0 = 0; end
 
-% Bandpass for pulse band
 bp = designfilt('bandpassiir','FilterOrder',4, ...
     'HalfPowerFrequency1',0.7,'HalfPowerFrequency2',4.0, ...
     'SampleRate',fs);
 x = filtfilt(bp, double(ppg));
 
-% Robust normalize
 x = x - median(x);
-sx = mad(x,1); if sx==0, sx = std(x); end; if sx==0, sx = 1; end
+sx = mad(x,1);
+if sx == 0, sx = std(x); end
+if sx == 0, sx = 1; end
 x = x / sx;
 
-% STRICTER detection (reduces false beats)
-minPeakDist = round(0.42 * fs);  % ~133 bpm max
-minProm = 0.6;                   % stricter prominence
+minPeakDist = round(0.45 * fs);
+minProm = 0.8;
 
 [~, locs] = findpeaks(x, 'MinPeakDistance', minPeakDist, 'MinPeakProminence', minProm);
 usedInversion = false;
 
-% If too few, try inverted
 dur_s = numel(ppg)/fs;
-expectedMinBeats = max(10, floor(dur_s * 0.5)); % ~30 bpm-ish minimum
+expectedMinBeats = max(10, floor(dur_s * 0.5)); % ~30 bpm minimum-ish
 
 if numel(locs) < expectedMinBeats
     [~, locs2] = findpeaks(-x, 'MinPeakDistance', minPeakDist, 'MinPeakProminence', minProm);
@@ -298,24 +282,19 @@ IBI  = diff(beatTimes);
 IBIt = beatTimes(2:end);
 end
 
-
-
 function IBI2 = clean_ibi(IBI)
 IBI2 = IBI;
 
-% Physiological bounds
 IBI2(IBI2 < 0.3 | IBI2 > 2.0) = NaN;
 
-% Outlier vs moving median
 med = movmedian(IBI2, 11, 'omitnan');
 relDev = abs(IBI2 - med)./med;
 IBI2(relDev > 0.2) = NaN;
 
-% Sudden jump rule
+% extra jump rule
 d = abs(diff([NaN; IBI2]));
-IBI2(d > 0.5) = NaN;
+IBI2(d > 0.3) = NaN;
 
-% Fill short gaps only
 IBI2 = fillmissing(IBI2,'linear','MaxGap',3);
 end
 
@@ -345,6 +324,7 @@ end
 end
 
 function y = toScalar(x)
+% Converts mixed CSV cell content to numeric scalar or NaN
 if isempty(x)
     y = NaN;
 elseif isnumeric(x)
