@@ -154,6 +154,15 @@ This sub-pipeline runs the RRest toolbox (Charlton et al., 2017) on the PPG data
 
 ---
 
+### Step 8 — Audience experience timeline (Figure 14)
+**Script:** `final/8_full_performance_emotions_timeline_V2.m`
+
+**What it does:** Combines pulse rate synchrony and group mean HR into a 3-state audience experience classification (High shared engagement / Shared engagement / Lower engagement) using z-scored synchrony and HR. Produces a 3-panel figure showing synchrony, HR, and the colour-coded state timeline across the full 80-minute performance. Also exports a CSV of all segments with start time, end time, and duration.
+
+**Output:** Figure 14 in dissertation (audience experience synthesis), `audience_experience_timeline_3state.csv`
+
+---
+
 ## Data Availability
 
 The raw PPG waveform CSV files and questionnaire data are not included in this repository as they contain data from human participants collected under an institutional ethics protocol. The dataset was provided by the project supervisor.
